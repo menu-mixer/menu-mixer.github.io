@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Menu Mixer - Recipe Management & Menu Planning</title>
+  <link rel="icon" type="image/svg+xml" href="/mixer/favicon.svg">
+  <meta name="description" content="Import recipes from anywhere, organize them into menus, and optimize with AI. Built for bakers, cafes, and caterers.">
+  <style>
+    :root {
+      --primary-50: #fdf4ff;
+      --primary-100: #fae8ff;
+      --primary-200: #f5d0fe;
+      --primary-300: #f0abfc;
+      --primary-400: #e879f9;
+      --primary-500: #d946ef;
+      --primary-600: #c026d3;
+      --primary-700: #a21caf;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-600: #4b5563;
+      --gray-700: #374151;
+      --gray-800: #1f2937;
+      --gray-900: #111827;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, var(--primary-50) 0%, var(--primary-100) 50%, white 100%);
+      min-height: 100vh;
+      color: var(--gray-900);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* Hero Section */
+    .hero {
+      padding: 80px 0 60px;
+      text-align: center;
+    }
+
+    .logo {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 80px;
+      height: 80px;
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 4px 20px rgba(192, 38, 211, 0.15);
+      margin-bottom: 32px;
+    }
+
+    .logo svg {
+      width: 48px;
+      height: 48px;
+    }
+
+    h1 {
+      font-size: 3.5rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--gray-900) 0%, var(--primary-700) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 20px;
+      letter-spacing: -0.02em;
+    }
+
+    .tagline {
+      font-size: 1.35rem;
+      color: var(--gray-600);
+      max-width: 600px;
+      margin: 0 auto 16px;
+      line-height: 1.6;
+    }
+
+    .audience {
+      font-size: 1rem;
+      color: var(--primary-600);
+      font-weight: 500;
+    }
+
+    /* Features Section */
+    .features {
+      padding: 60px 0;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+    }
+
+    .feature-card {
+      background: white;
+      border-radius: 16px;
+      padding: 28px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      border: 1px solid var(--gray-100);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(192, 38, 211, 0.1);
+    }
+
+    .feature-icon {
+      width: 48px;
+      height: 48px;
+      background: var(--primary-50);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+    }
+
+    .feature-icon svg {
+      width: 24px;
+      height: 24px;
+      stroke: var(--primary-600);
+    }
+
+    .feature-card h3 {
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: 8px;
+    }
+
+    .feature-card p {
+      font-size: 0.95rem;
+      color: var(--gray-600);
+      line-height: 1.6;
+    }
+
+    /* How it Works */
+    .how-it-works {
+      padding: 60px 0;
+      text-align: center;
+    }
+
+    .how-it-works h2 {
+      font-size: 2rem;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: 40px;
+    }
+
+    .steps {
+      display: flex;
+      justify-content: center;
+      gap: 48px;
+      flex-wrap: wrap;
+    }
+
+    .step {
+      max-width: 200px;
+    }
+
+    .step-number {
+      width: 40px;
+      height: 40px;
+      background: var(--primary-600);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      margin: 0 auto 12px;
+    }
+
+    .step h4 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--gray-800);
+      margin-bottom: 4px;
+    }
+
+    .step p {
+      font-size: 0.9rem;
+      color: var(--gray-600);
+    }
+
+    /* CTA Section */
+    .cta {
+      padding: 80px 0 100px;
+      text-align: center;
+    }
+
+    .cta-box {
+      background: white;
+      border-radius: 24px;
+      padding: 60px 40px;
+      box-shadow: 0 4px 30px rgba(192, 38, 211, 0.12);
+      border: 1px solid var(--primary-100);
+    }
+
+    .cta h2 {
+      font-size: 2rem;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: 12px;
+    }
+
+    .cta p {
+      color: var(--gray-600);
+      margin-bottom: 32px;
+      font-size: 1.05rem;
+    }
+
+    .cta-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-600) 100%);
+      color: white;
+      font-size: 1.15rem;
+      font-weight: 600;
+      padding: 18px 40px;
+      border-radius: 14px;
+      text-decoration: none;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 14px rgba(192, 38, 211, 0.35);
+    }
+
+    .cta-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(192, 38, 211, 0.45);
+    }
+
+    .cta-button svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    /* Footer */
+    footer {
+      padding: 24px 0;
+      text-align: center;
+      color: var(--gray-600);
+      font-size: 0.85rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+      h1 { font-size: 2.5rem; }
+      .tagline { font-size: 1.15rem; }
+      .hero { padding: 60px 0 40px; }
+      .steps { gap: 32px; }
+      .cta-box { padding: 40px 24px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Hero -->
+  <section class="hero">
+    <div class="container">
+      <div class="logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#c026d3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17 21a1 1 0 0 0 1-1v-5.35c0-.457.316-.844.727-1.041a4 4 0 0 0-2.134-7.589 5 5 0 0 0-9.186 0 4 4 0 0 0-2.134 7.588c.411.198.727.585.727 1.041V20a1 1 0 0 0 1 1Z"/>
+          <path d="M6 17h12"/>
+        </svg>
+      </div>
+      <h1>Menu Mixer</h1>
+      <p class="tagline">Import recipes from anywhere. Organize them into menus. Optimize with AI.</p>
+      <p class="audience">Built for bakers, cafes, and caterers</p>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="features">
+    <div class="container">
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+          </div>
+          <h3>Universal Import</h3>
+          <p>Drag in PDFs, photos, URLs, or text. AI extracts structured recipes from any format.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="7"/>
+              <rect x="14" y="3" width="7" height="7"/>
+              <rect x="14" y="14" width="7" height="7"/>
+              <rect x="3" y="14" width="7" height="7"/>
+            </svg>
+          </div>
+          <h3>Visual Menu Planning</h3>
+          <p>Drag recipes between backlog and active menu. Organize by season, client, or event.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
+            </svg>
+          </div>
+          <h3>AI Optimization</h3>
+          <p>Maximize ingredient reuse, ensure dietary coverage, and re-theme for seasonal menus.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+          </div>
+          <h3>Private & Local</h3>
+          <p>All your recipes stored in your browser. No account needed. Export anytime.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How it Works -->
+  <section class="how-it-works">
+    <div class="container">
+      <h2>How It Works</h2>
+      <div class="steps">
+        <div class="step">
+          <div class="step-number">1</div>
+          <h4>Drop Recipes</h4>
+          <p>Import from any source</p>
+        </div>
+        <div class="step">
+          <div class="step-number">2</div>
+          <h4>Build Menus</h4>
+          <p>Organize visually</p>
+        </div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <h4>Optimize</h4>
+          <p>Let AI improve it</p>
+        </div>
+        <div class="step">
+          <div class="step-number">4</div>
+          <h4>Export</h4>
+          <p>Print or share</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta">
+    <div class="container">
+      <div class="cta-box">
+        <h2>Ready to streamline your menu planning?</h2>
+        <p>No signup required. Start organizing recipes in seconds.</p>
+        <a href="/mixer/" class="cta-button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17 21a1 1 0 0 0 1-1v-5.35c0-.457.316-.844.727-1.041a4 4 0 0 0-2.134-7.589 5 5 0 0 0-9.186 0 4 4 0 0 0-2.134 7.588c.411.198.727.585.727 1.041V20a1 1 0 0 0 1 1Z"/>
+            <path d="M6 17h12"/>
+          </svg>
+          Start Mixing
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="container">
+      <p>Menu Mixer &mdash; Recipe management for food professionals</p>
+    </div>
+  </footer>
+</body>
+</html>

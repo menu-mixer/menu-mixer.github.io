@@ -39,13 +39,18 @@ jobs:
         env:
           VITE_API_URL: https://menu-mixer-api.github-f2b.workers.dev
 
+      - name: Copy landing page files
+        run: |
+          cp ../landing/index.html ../dist/
+          cp ../landing/404.html ../dist/
+
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: app/dist
+          path: dist
 
   deploy:
     environment:
