@@ -210,11 +210,11 @@ export async function loadStarterPack(pack: StarterPack): Promise<void> {
     return;
   }
 
-  // Check if user already has data (don't overwrite)
-  const existingBoxes = await recipeBoxDB.getAll();
-  const existingMenus = await menuDB.getAll();
-  if (existingBoxes.length > 0 || existingMenus.length > 0) {
-    console.log('User has existing data, skipping starter pack');
+  // Check if user already has meaningful data (recipes) - don't overwrite
+  // Note: Empty menus/boxes may exist from default creation, so check recipes instead
+  const existingRecipes = await recipeDB.getAll();
+  if (existingRecipes.length > 0) {
+    console.log('User has existing recipes, skipping starter pack');
     markStarterPackLoaded(pack.id);
     return;
   }
