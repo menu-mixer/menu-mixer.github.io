@@ -1,4 +1,4 @@
-import type { AuthState, Recipe } from '@/types';
+import type { AuthState, RecipeDisplayData } from '@/types';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'https://menu-mixer-api.workers.dev';
 
@@ -181,7 +181,7 @@ export async function parseRecipe(
 
 export async function optimizeRecipes(
   type: 'dedupe' | 'ingredients' | 'dietary' | 'cost',
-  recipes: Recipe[]
+  recipes: RecipeDisplayData[]
 ): Promise<{ result: unknown; remaining: number }> {
   const simplifiedRecipes = recipes.map(r => ({
     name: r.name,
@@ -194,7 +194,7 @@ export async function optimizeRecipes(
 }
 
 export async function themeRecipes(
-  recipes: Recipe[],
+  recipes: RecipeDisplayData[],
   theme: string
 ): Promise<{ themedRecipes: { original: string; themed: { name: string; description: string } }[]; remaining: number }> {
   const simplifiedRecipes = recipes.map(r => ({
@@ -206,7 +206,7 @@ export async function themeRecipes(
 
 export async function chat(
   messages: { role: string; content: string }[],
-  context?: { recipes: Recipe[]; activeMenu: string[] }
+  context?: { recipes: RecipeDisplayData[]; activeMenu: string[] }
 ): Promise<{ response: string; remaining: number }> {
   const simplifiedContext = context
     ? {

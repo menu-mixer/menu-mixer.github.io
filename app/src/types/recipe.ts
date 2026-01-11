@@ -41,18 +41,39 @@ export interface RecipeBox {
   createdAt: string;
 }
 
-export interface MenuLayout {
+// MenuItem is a copy of recipe data for a specific menu
+// Can be themed/modified independently from the source recipe
+export interface MenuItem {
   id: string;
-  x: number;
-  y: number;
+  sourceRecipeId: string | null; // Reference to original recipe, null if created directly in menu
+  name: string;
+  description: string;
+  instructions: string;
+  notes?: string;
+  ingredients: Ingredient[];
+  metadata: RecipeMetadata;
+  addedAt: string;
 }
+
+// Common display fields shared by Recipe and MenuItem
+export type RecipeDisplayData = {
+  id: string;
+  name: string;
+  description: string;
+  instructions: string;
+  notes?: string;
+  ingredients: Ingredient[];
+  metadata: RecipeMetadata;
+};
 
 export interface Menu {
   id: string;
   name: string;
-  activeRecipeIds: string[];
-  backlogRecipeIds: string[];
-  layout: MenuLayout[];
+  items: MenuItem[];
+  // Legacy fields for migration (deprecated)
+  activeRecipeIds?: string[];
+  backlogRecipeIds?: string[];
+  layout?: { id: string; x: number; y: number }[];
   createdAt: string;
   updatedAt: string;
 }

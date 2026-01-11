@@ -29,9 +29,9 @@ export function OptimizationPanel({ onClose }: OptimizationPanelProps) {
 
   const runOptimization = async (type: OptimizationType) => {
     const activeMenu = getActiveMenu();
-    const recipesToAnalyze = activeMenu
-      ? recipes.filter((r) => activeMenu.activeRecipeIds.includes(r.id))
-      : recipes;
+    const menuItems = activeMenu?.items || [];
+    // Use menu items directly (they have full recipe data) or fall back to all recipes
+    const recipesToAnalyze = menuItems.length > 0 ? menuItems : recipes;
 
     if (recipesToAnalyze.length < 2) {
       addToast('info', 'Need at least 2 recipes in the active menu to optimize');

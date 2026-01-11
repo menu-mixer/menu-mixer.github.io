@@ -29,7 +29,7 @@ export function MenuSelector() {
           {activeMenu?.name || 'Select Menu'}
         </span>
         <span className="text-xs text-gray-500">
-          ({activeMenu?.activeRecipeIds.length || 0} recipes)
+          ({activeMenu?.items?.length || 0} recipes)
         </span>
         <ChevronDown size={16} className={`text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
@@ -54,7 +54,7 @@ export function MenuSelector() {
                   <span className="font-medium">{menu.name}</span>
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-gray-400">
-                      {menu.activeRecipeIds.length} recipes
+                      {menu.items?.length || 0} recipes
                     </span>
                     {menu.id === activeMenuId && <Check size={16} className="text-primary-600" />}
                   </div>

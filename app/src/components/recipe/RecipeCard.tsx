@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { Clock, DollarSign, ChevronDown, ChevronUp, Trash2, Edit2, Plus, X } from 'lucide-react';
-import type { Recipe } from '@/types';
+import type { RecipeDisplayData } from '@/types';
 import { DietaryBadge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 
 interface RecipeCardProps {
-  recipe: Recipe;
-  onEdit?: (recipe: Recipe) => void;
+  recipe: RecipeDisplayData;
+  onEdit?: (recipe: RecipeDisplayData) => void;
   onDelete?: (id: string) => void;
   onAdd?: (id: string) => void;
   onRemove?: (id: string) => void;

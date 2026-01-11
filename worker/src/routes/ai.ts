@@ -31,7 +31,9 @@ export async function handleParse(
 
     let result;
     if (contentType === 'image') {
-      result = await parseRecipeFromImage(env.OPENAI_API_KEY, content);
+      result = await parseRecipeFromImage(env.OPENAI_API_KEY, content, 'image/jpeg');
+    } else if (contentType === 'pdf') {
+      result = await parseRecipeFromImage(env.OPENAI_API_KEY, content, 'application/pdf');
     } else {
       result = await parseRecipeFromText(env.OPENAI_API_KEY, content);
     }

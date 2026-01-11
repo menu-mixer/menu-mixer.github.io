@@ -1,16 +1,27 @@
 import { v4 as uuid } from 'uuid';
 import { getDB } from './schema';
-import type { Menu, MenuLayout } from '@/types';
+import type { Menu, MenuItem, Recipe } from '@/types';
 
 export const menuDB = {
   async getAll(): Promise<Menu[]> {
     const db = await getDB();
-    return db.getAll('menus');
+    const menus = await db.getAll('menus');
+    // Migrate old menus that don't have items array
+    return menus.map(menu => ({
+      ...menu,
+      items: menu.items || [],
+    }));
   },
 
   async getById(id: string): Promise<Menu | undefined> {
     const db = await getDB();
-    return db.get('menus', id);
+    const menu = await db.get('menus', id);
+    if (!menu) return undefined;
+    // Migrate old menu format
+    return {
+      ...menu,
+      items: menu.items || [],
+    };
   },
 
   async create(name: string): Promise<Menu> {
@@ -19,9 +30,7 @@ export const menuDB = {
     const menu: Menu = {
       id: uuid(),
       name,
-      activeRecipeIds: [],
-      backlogRecipeIds: [],
-      layout: [],
+      items: [],
       createdAt: now,
       updatedAt: now,
     };
@@ -51,24 +60,32 @@ export const menuDB = {
     await db.delete('menus', id);
   },
 
-  async addToActive(menuId: string, recipeId: string, position?: { x: number; y: number }): Promise<Menu | undefined> {
+  async addItem(menuId: string, recipe: Recipe): Promise<Menu | undefined> {
     const db = await getDB();
     const menu = await db.get('menus', menuId);
     if (!menu) return undefined;
 
-    if (menu.activeRecipeIds.includes(recipeId)) return menu;
+    const items = menu.items || [];
+    // Check if already in menu by sourceRecipeId
+    if (items.some(item => item.sourceRecipeId === recipe.id)) {
+      return { ...menu, items };
+    }
 
-    const newLayout: MenuLayout = {
-      id: recipeId,
-      x: position?.x ?? (menu.layout.length % 4) * 280,
-      y: position?.y ?? Math.floor(menu.layout.length / 4) * 200,
+    const menuItem: MenuItem = {
+      id: uuid(),
+      sourceRecipeId: recipe.id,
+      name: recipe.name,
+      description: recipe.description,
+      instructions: recipe.instructions,
+      notes: recipe.notes,
+      ingredients: [...recipe.ingredients],
+      metadata: { ...recipe.metadata },
+      addedAt: new Date().toISOString(),
     };
 
     const updated: Menu = {
       ...menu,
-      activeRecipeIds: [...menu.activeRecipeIds, recipeId],
-      backlogRecipeIds: menu.backlogRecipeIds.filter(id => id !== recipeId),
-      layout: [...menu.layout, newLayout],
+      items: [...items, menuItem],
       updatedAt: new Date().toISOString(),
     };
 
@@ -76,16 +93,15 @@ export const menuDB = {
     return updated;
   },
 
-  async removeFromActive(menuId: string, recipeId: string): Promise<Menu | undefined> {
+  async removeItem(menuId: string, itemId: string): Promise<Menu | undefined> {
     const db = await getDB();
     const menu = await db.get('menus', menuId);
     if (!menu) return undefined;
 
+    const items = menu.items || [];
     const updated: Menu = {
       ...menu,
-      activeRecipeIds: menu.activeRecipeIds.filter(id => id !== recipeId),
-      backlogRecipeIds: [...menu.backlogRecipeIds, recipeId],
-      layout: menu.layout.filter(l => l.id !== recipeId),
+      items: items.filter(item => item.id !== itemId),
       updatedAt: new Date().toISOString(),
     };
 
@@ -93,14 +109,32 @@ export const menuDB = {
     return updated;
   },
 
-  async updateLayout(menuId: string, layout: MenuLayout[]): Promise<Menu | undefined> {
+  async updateItem(menuId: string, itemId: string, updates: Partial<MenuItem>): Promise<Menu | undefined> {
+    const db = await getDB();
+    const menu = await db.get('menus', menuId);
+    if (!menu) return undefined;
+
+    const items = menu.items || [];
+    const updated: Menu = {
+      ...menu,
+      items: items.map(item =>
+        item.id === itemId ? { ...item, ...updates } : item
+      ),
+      updatedAt: new Date().toISOString(),
+    };
+
+    await db.put('menus', updated);
+    return updated;
+  },
+
+  async clearItems(menuId: string): Promise<Menu | undefined> {
     const db = await getDB();
     const menu = await db.get('menus', menuId);
     if (!menu) return undefined;
 
     const updated: Menu = {
       ...menu,
-      layout,
+      items: [],
       updatedAt: new Date().toISOString(),
     };
 

@@ -1,9 +1,13 @@
 import { useState, useCallback, useMemo } from 'react';
-import { Search, Settings, Upload, ChevronDown, Check } from 'lucide-react';
+import { Search, Settings, Upload, ChevronDown, Check, Plus, Trash2 } from 'lucide-react';
+import * as pdfjsLib from 'pdfjs-dist';
 import { useRecipeStore, useMenuStore, useUIStore, useAuthStore } from '@/stores';
 import { RecipeCard } from './RecipeCard';
 import { parseRecipe } from '@/lib/ai/client';
 import type { ParsedRecipe } from '@/lib/ai/client';
+
+// Set up PDF.js worker
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
 interface RecipeBoxProps {
   onRecipesParsed: (recipes: ParsedRecipe[]) => void;
@@ -11,7 +15,7 @@ interface RecipeBoxProps {
 
 export function RecipeBox({ onRecipesParsed }: RecipeBoxProps) {
   const { recipes, deleteRecipe } = useRecipeStore();
-  const { recipeBoxes, getActiveMenu, addToActiveMenu } = useMenuStore();
+  const { recipeBoxes, getActiveMenu, addToActiveMenu, createRecipeBox, deleteRecipeBox } = useMenuStore();
   const { addToast } = useUIStore();
   const { updateLimits } = useAuthStore();
 
@@ -20,9 +24,14 @@ export function RecipeBox({ onRecipesParsed }: RecipeBoxProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [boxSelectorOpen, setBoxSelectorOpen] = useState(false);
   const [activeBoxId, setActiveBoxId] = useState<string | null>(null);
+  const [isCreatingBox, setIsCreatingBox] = useState(false);
+  const [newBoxName, setNewBoxName] = useState('');
 
   const activeMenu = getActiveMenu();
-  const activeMenuIds = new Set(activeMenu?.activeRecipeIds || []);
+  // Build a set of source recipe IDs that are in the active menu
+  const activeMenuSourceIds = new Set(
+    (activeMenu?.items || []).map(item => item.sourceRecipeId).filter(Boolean)
+  );
 
   // Filter recipes based on active box and search
   const filteredRecipes = useMemo(() => {
@@ -52,6 +61,28 @@ export function RecipeBox({ onRecipesParsed }: RecipeBoxProps) {
     return result;
   }, [recipes, activeBoxId, recipeBoxes, searchQuery]);
 
+  // Extract text from PDF using pdf.js
+  const extractPdfText = async (file: File): Promise<string> => {
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    const textParts: string[] = [];
+
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const textContent = await page.getTextContent();
+      const pageText = textContent.items
+        .map((item) => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const textItem = item as any;
+          return textItem.str || '';
+        })
+        .join(' ');
+      textParts.push(pageText);
+    }
+
+    return textParts.join('\n\n');
+  };
+
   // File handling
   const processFile = async (file: File) => {
     setIsProcessing(true);
@@ -63,8 +94,14 @@ export function RecipeBox({ onRecipesParsed }: RecipeBoxProps) {
         contentType = 'image';
         content = await fileToBase64(file);
       } else if (file.type === 'application/pdf') {
-        contentType = 'pdf';
-        content = await fileToBase64(file);
+        // Extract text from PDF instead of sending base64
+        contentType = 'text';
+        content = await extractPdfText(file);
+        if (!content.trim()) {
+          addToast('info', 'PDF appears to be image-only. Try taking a screenshot instead.');
+          setIsProcessing(false);
+          return;
+        }
       } else {
         contentType = 'text';
         content = await file.text();
@@ -144,13 +181,35 @@ export function RecipeBox({ onRecipesParsed }: RecipeBoxProps) {
   };
 
   const handleAddToMenu = (recipeId: string) => {
-    addToActiveMenu(recipeId);
-    addToast('success', 'Added to menu');
+    const recipe = recipes.find(r => r.id === recipeId);
+    if (recipe) {
+      addToActiveMenu(recipe);
+      addToast('success', 'Added to menu');
+    }
   };
 
   const handleDelete = async (recipeId: string) => {
     await deleteRecipe(recipeId);
     addToast('success', 'Recipe deleted');
+  };
+
+  const handleCreateBox = async () => {
+    if (!newBoxName.trim()) return;
+    const box = await createRecipeBox(newBoxName.trim());
+    setActiveBoxId(box.id);
+    setNewBoxName('');
+    setIsCreatingBox(false);
+    setBoxSelectorOpen(false);
+    addToast('success', `Created "${box.name}"`);
+  };
+
+  const handleDeleteBox = async (boxId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    await deleteRecipeBox(boxId);
+    if (activeBoxId === boxId) {
+      setActiveBoxId(null);
+    }
+    addToast('success', 'Recipe box deleted');
   };
 
   const activeBox = activeBoxId ? recipeBoxes.find((b) => b.id === activeBoxId) : null;
@@ -179,38 +238,75 @@ export function RecipeBox({ onRecipesParsed }: RecipeBoxProps) {
 
           {boxSelectorOpen && (
             <>
-              <div className="fixed inset-0 z-10" onClick={() => setBoxSelectorOpen(false)} />
-              <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-20">
-                <button
-                  onClick={() => {
-                    setActiveBoxId(null);
-                    setBoxSelectorOpen(false);
-                  }}
-                  className={`w-full flex items-center justify-between px-3 py-2 text-sm hover:bg-gray-50 rounded-t-lg ${
-                    !activeBoxId ? 'bg-primary-50 text-primary-700' : ''
-                  }`}
-                >
-                  All Recipes
-                  {!activeBoxId && <Check size={14} />}
-                </button>
-                {recipeBoxes.map((box) => (
+              <div className="fixed inset-0 z-10" onClick={() => { setBoxSelectorOpen(false); setIsCreatingBox(false); }} />
+              <div className="absolute top-full left-0 mt-1 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-20">
+                <div className="p-1">
                   <button
-                    key={box.id}
                     onClick={() => {
-                      setActiveBoxId(box.id);
+                      setActiveBoxId(null);
                       setBoxSelectorOpen(false);
                     }}
-                    className={`w-full flex items-center justify-between px-3 py-2 text-sm hover:bg-gray-50 last:rounded-b-lg ${
-                      activeBoxId === box.id ? 'bg-primary-50 text-primary-700' : ''
+                    className={`w-full flex items-center justify-between px-3 py-2 text-sm hover:bg-gray-50 rounded ${
+                      !activeBoxId ? 'bg-primary-50 text-primary-700' : ''
                     }`}
                   >
-                    <span>{box.name}</span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-gray-400">{box.recipeIds.length}</span>
-                      {activeBoxId === box.id && <Check size={14} />}
-                    </div>
+                    All Recipes
+                    {!activeBoxId && <Check size={14} />}
                   </button>
-                ))}
+                  {recipeBoxes.map((box) => (
+                    <button
+                      key={box.id}
+                      onClick={() => {
+                        setActiveBoxId(box.id);
+                        setBoxSelectorOpen(false);
+                      }}
+                      className={`w-full flex items-center justify-between px-3 py-2 text-sm hover:bg-gray-50 rounded group ${
+                        activeBoxId === box.id ? 'bg-primary-50 text-primary-700' : ''
+                      }`}
+                    >
+                      <span className="truncate">{box.name}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-gray-400">{box.recipeIds.length}</span>
+                        {activeBoxId === box.id && <Check size={14} />}
+                        <button
+                          onClick={(e) => handleDeleteBox(box.id, e)}
+                          className="p-1 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+
+                <div className="border-t border-gray-100 p-2">
+                  {isCreatingBox ? (
+                    <div className="flex gap-1">
+                      <input
+                        value={newBoxName}
+                        onChange={(e) => setNewBoxName(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleCreateBox()}
+                        placeholder="Box name..."
+                        className="flex-1 px-2 py-1.5 text-sm border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        autoFocus
+                      />
+                      <button
+                        onClick={handleCreateBox}
+                        className="px-2 py-1.5 bg-primary-600 text-white text-sm rounded hover:bg-primary-700"
+                      >
+                        Add
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setIsCreatingBox(true)}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded"
+                    >
+                      <Plus size={14} />
+                      New Recipe Box
+                    </button>
+                  )}
+                </div>
               </div>
             </>
           )}
@@ -277,7 +373,7 @@ export function RecipeBox({ onRecipesParsed }: RecipeBoxProps) {
                 key={recipe.id}
                 recipe={recipe}
                 draggable
-                isInMenu={activeMenuIds.has(recipe.id)}
+                isInMenu={activeMenuSourceIds.has(recipe.id)}
                 onAdd={handleAddToMenu}
                 onDelete={handleDelete}
               />

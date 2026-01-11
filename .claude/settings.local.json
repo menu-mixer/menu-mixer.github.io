@@ -17,7 +17,8 @@
       "Bash(curl:*)",
       "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzMjhhYzNmOGJkZjc3ODc3YzExNTUwYzVlOTg4OGJiNDg5MGViZWIxMmEwYzVmOGVhZWE3NTE2ZjBmZGVjZWY0IiwidGllciI6ImJldGEiLCJpYXQiOjE3NjgxNjM3MTQsImV4cCI6MTc3MDc1NTcxNH0.vi4d69HGN5j0PPvMcUAbbtZbbsHpeNOA7dipUxBQFn0\")",
       "Bash(wc:*)",
-      "Bash(npm uninstall:*)"
+      "Bash(npm uninstall:*)",
+      "Bash(npm install:*)"
     ]
   }
 }

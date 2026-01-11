@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Menu, MenuLayout, RecipeBox } from '@/types';
+import type { Menu, MenuItem, Recipe, RecipeBox } from '@/types';
 import { menuDB, recipeBoxDB } from '@/lib/db';
 
 interface MenuStore {
@@ -17,11 +17,11 @@ interface MenuStore {
   setActiveMenu: (id: string) => void;
   getActiveMenu: () => Menu | undefined;
 
-  // Active menu recipe operations
-  addToActiveMenu: (recipeId: string, position?: { x: number; y: number }) => Promise<void>;
-  removeFromActiveMenu: (recipeId: string) => Promise<void>;
+  // Active menu item operations (full copy of recipe data)
+  addToActiveMenu: (recipe: Recipe) => Promise<void>;
+  removeFromActiveMenu: (itemId: string) => Promise<void>;
+  updateMenuItem: (itemId: string, updates: Partial<MenuItem>) => Promise<void>;
   clearActiveMenu: () => Promise<void>;
-  updateLayout: (layout: MenuLayout[]) => Promise<void>;
 
   // Recipe box operations
   createRecipeBox: (name: string) => Promise<RecipeBox>;
@@ -86,11 +86,11 @@ export const useMenuStore = create<MenuStore>((set, get) => ({
     return menus.find(m => m.id === activeMenuId);
   },
 
-  addToActiveMenu: async (recipeId, position) => {
+  addToActiveMenu: async (recipe) => {
     const { activeMenuId } = get();
     if (!activeMenuId) return;
 
-    const updated = await menuDB.addToActive(activeMenuId, recipeId, position);
+    const updated = await menuDB.addItem(activeMenuId, recipe);
     if (updated) {
       set(state => ({
         menus: state.menus.map(m => (m.id === activeMenuId ? updated : m)),
@@ -98,11 +98,23 @@ export const useMenuStore = create<MenuStore>((set, get) => ({
     }
   },
 
-  removeFromActiveMenu: async (recipeId) => {
+  removeFromActiveMenu: async (itemId) => {
     const { activeMenuId } = get();
     if (!activeMenuId) return;
 
-    const updated = await menuDB.removeFromActive(activeMenuId, recipeId);
+    const updated = await menuDB.removeItem(activeMenuId, itemId);
+    if (updated) {
+      set(state => ({
+        menus: state.menus.map(m => (m.id === activeMenuId ? updated : m)),
+      }));
+    }
+  },
+
+  updateMenuItem: async (itemId, updates) => {
+    const { activeMenuId } = get();
+    if (!activeMenuId) return;
+
+    const updated = await menuDB.updateItem(activeMenuId, itemId, updates);
     if (updated) {
       set(state => ({
         menus: state.menus.map(m => (m.id === activeMenuId ? updated : m)),
@@ -114,22 +126,7 @@ export const useMenuStore = create<MenuStore>((set, get) => ({
     const { activeMenuId } = get();
     if (!activeMenuId) return;
 
-    const updated = await menuDB.update(activeMenuId, {
-      activeRecipeIds: [],
-      layout: [],
-    });
-    if (updated) {
-      set(state => ({
-        menus: state.menus.map(m => (m.id === activeMenuId ? updated : m)),
-      }));
-    }
-  },
-
-  updateLayout: async (layout) => {
-    const { activeMenuId } = get();
-    if (!activeMenuId) return;
-
-    const updated = await menuDB.updateLayout(activeMenuId, layout);
+    const updated = await menuDB.clearItems(activeMenuId);
     if (updated) {
       set(state => ({
         menus: state.menus.map(m => (m.id === activeMenuId ? updated : m)),

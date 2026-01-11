@@ -15,12 +15,13 @@ export function MenuMutateRibbon() {
   const [isChatLoading, setIsChatLoading] = useState(false);
 
   const activeMenu = getActiveMenu();
-  const activeIds = new Set(activeMenu?.activeRecipeIds || []);
+  const menuItems = activeMenu?.items || [];
+  const activeSourceIds = new Set(menuItems.map(item => item.sourceRecipeId).filter(Boolean));
 
   // Get recipes not in menu
   const availableRecipes = useMemo(() => {
-    return recipes.filter((r) => !activeIds.has(r.id));
-  }, [recipes, activeIds]);
+    return recipes.filter((r) => !activeSourceIds.has(r.id));
+  }, [recipes, activeSourceIds]);
 
   // Get unique tags from available recipes
   const availableTags = useMemo(() => {
@@ -33,13 +34,13 @@ export function MenuMutateRibbon() {
 
   const handleAddAll = () => {
     availableRecipes.forEach((r) => {
-      addToActiveMenu(r.id);
+      addToActiveMenu(r);
     });
     addToast('success', `Added ${availableRecipes.length} recipes to menu`);
   };
 
   const handleClear = () => {
-    if (activeMenu && activeMenu.activeRecipeIds.length > 0) {
+    if (activeMenu && menuItems.length > 0) {
       clearActiveMenu();
       addToast('success', 'Cleared menu');
     }
@@ -48,7 +49,7 @@ export function MenuMutateRibbon() {
   const handleAddByTag = (tag: DietaryTag) => {
     const tagged = availableRecipes.filter((r) => r.metadata.tags.includes(tag));
     tagged.forEach((r) => {
-      addToActiveMenu(r.id);
+      addToActiveMenu(r);
     });
     addToast('success', `Added ${tagged.length} ${tag} recipes`);
     setTagDropdownOpen(false);
@@ -59,10 +60,9 @@ export function MenuMutateRibbon() {
 
     setIsChatLoading(true);
     try {
-      const activeRecipes = recipes.filter((r) => activeIds.has(r.id));
       const result = await chat(
         [{ role: 'user', content: chatInput }],
-        { recipes, activeMenu: activeRecipes.map((r) => r.name) }
+        { recipes, activeMenu: menuItems.map((item) => item.name) }
       );
       addToast('info', result.response.slice(0, 100) + (result.response.length > 100 ? '...' : ''));
       setChatInput('');
@@ -88,7 +88,7 @@ export function MenuMutateRibbon() {
       {/* Clear */}
       <button
         onClick={handleClear}
-        disabled={!activeMenu || activeMenu.activeRecipeIds.length === 0}
+        disabled={!activeMenu || menuItems.length === 0}
         className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <Trash2 size={14} />

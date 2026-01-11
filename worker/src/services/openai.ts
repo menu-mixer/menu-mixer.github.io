@@ -83,9 +83,10 @@ Only return valid JSON, no markdown or explanation.`;
 
 export async function parseRecipeFromImage(
   apiKey: string,
-  imageBase64: string
+  imageBase64: string,
+  mimeType: string = 'image/jpeg'
 ): Promise<{ recipes: ParsedRecipe[]; tokensUsed: number }> {
-  const systemPrompt = `You are a recipe parsing assistant. Extract all recipes from the provided image.
+  const systemPrompt = `You are a recipe parsing assistant. Extract all recipes from the provided image or document.
 
 For each recipe, return a JSON object with:
 - name: Recipe title
@@ -106,8 +107,8 @@ Only return valid JSON, no markdown or explanation.`;
     {
       role: 'user',
       content: [
-        { type: 'text', text: 'Extract recipes from this image:' },
-        { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${imageBase64}` } }
+        { type: 'text', text: 'Extract recipes from this:' },
+        { type: 'image_url', image_url: { url: `data:${mimeType};base64,${imageBase64}` } }
       ]
     },
   ], 'gpt-4o');

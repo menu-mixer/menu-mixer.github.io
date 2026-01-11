@@ -36,9 +36,9 @@ export function ThemePanel({ onClose }: ThemePanelProps) {
     }
 
     const activeMenu = getActiveMenu();
-    const recipesToTheme = activeMenu
-      ? recipes.filter((r) => activeMenu.activeRecipeIds.includes(r.id))
-      : recipes;
+    const menuItems = activeMenu?.items || [];
+    // Use menu items directly (they have full recipe data) or fall back to all recipes
+    const recipesToTheme = menuItems.length > 0 ? menuItems : recipes;
 
     if (recipesToTheme.length === 0) {
       addToast('info', 'No recipes to theme');

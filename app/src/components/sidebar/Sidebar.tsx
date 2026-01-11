@@ -10,31 +10,28 @@ import {
   DollarSign,
   Sparkles,
 } from 'lucide-react';
-import { useMenuStore, useRecipeStore, useAuthStore, useUIStore } from '@/stores';
+import { useMenuStore, useAuthStore, useUIStore } from '@/stores';
 import type { DietaryTag } from '@/types';
 import { DIETARY_TAGS } from '@/types';
 
 export function Sidebar() {
   const { logout } = useAuthStore();
   const { sidebarCollapsed, toggleSidebar, openModal } = useUIStore();
-  const { recipes } = useRecipeStore();
   const { getActiveMenu } = useMenuStore();
 
   const activeMenu = getActiveMenu();
 
   const stats = useMemo(() => {
-    const menuRecipes = activeMenu
-      ? recipes.filter((r) => activeMenu.activeRecipeIds.includes(r.id))
-      : [];
+    const menuItems = activeMenu?.items || [];
 
-    const totalCost = menuRecipes.reduce(
-      (sum, r) => sum + (r.metadata.ingredientCost || 0),
+    const totalCost = menuItems.reduce(
+      (sum, item) => sum + (item.metadata.ingredientCost || 0),
       0
     );
 
     const ingredients = new Map<string, number>();
-    menuRecipes.forEach((r) => {
-      r.ingredients.forEach((ing) => {
+    menuItems.forEach((item) => {
+      item.ingredients.forEach((ing) => {
         const key = ing.item.toLowerCase();
         ingredients.set(key, (ingredients.get(key) || 0) + 1);
       });
@@ -48,8 +45,8 @@ export function Sidebar() {
       'dairy-free': 0,
     };
 
-    menuRecipes.forEach((r) => {
-      r.metadata.tags.forEach((tag) => {
+    menuItems.forEach((item) => {
+      item.metadata.tags.forEach((tag) => {
         if (tag in dietaryCounts) {
           dietaryCounts[tag]++;
         }
@@ -57,7 +54,7 @@ export function Sidebar() {
     });
 
     return {
-      recipeCount: menuRecipes.length,
+      recipeCount: menuItems.length,
       totalCost,
       ingredientCount: ingredients.size,
       ingredients: Array.from(ingredients.entries())
@@ -65,7 +62,7 @@ export function Sidebar() {
         .slice(0, 8),
       dietaryCounts,
     };
-  }, [activeMenu, recipes]);
+  }, [activeMenu]);
 
   if (sidebarCollapsed) {
     return (
