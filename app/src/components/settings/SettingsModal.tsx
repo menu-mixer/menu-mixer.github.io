@@ -11,7 +11,7 @@ interface SettingsModalProps {
 }
 
 export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
-  const [confirmReset, setConfirmReset] = useState(false);
+  const [confirmReset, setConfirmReset] = useState<'data' | 'hard' | null>(null);
   const [isResetting, setIsResetting] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
@@ -74,7 +74,26 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     }
   };
 
-  const handleReset = async () => {
+  const handleResetData = async () => {
+    setIsResetting(true);
+    try {
+      // Delete IndexedDB database (recipes, menus, etc.)
+      const databases = await indexedDB.databases();
+      for (const db of databases) {
+        if (db.name) {
+          indexedDB.deleteDatabase(db.name);
+        }
+      }
+      addToast('success', 'All recipes and menus cleared');
+      window.location.reload();
+    } catch (err) {
+      addToast('error', 'Failed to reset data');
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
+  const handleHardReset = async () => {
     setIsResetting(true);
     try {
       // Delete IndexedDB database
@@ -84,14 +103,14 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           indexedDB.deleteDatabase(db.name);
         }
       }
-      // Clear localStorage
+      // Clear localStorage (auth, onboarding state, etc.)
       localStorage.clear();
-      // Logout and reload
+      // Logout and reload - will trigger invite code flow
       logout();
       addToast('success', 'All data cleared');
       window.location.reload();
     } catch (err) {
-      addToast('error', 'Failed to reset data');
+      addToast('error', 'Failed to reset');
     } finally {
       setIsResetting(false);
     }
@@ -137,24 +156,67 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           </p>
         </div>
 
-        {/* Reset Section */}
+        {/* Reset Data Section */}
+        <div className="border border-amber-200 rounded-lg p-4 bg-amber-50">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="text-amber-500 flex-shrink-0 mt-0.5" size={20} />
+            <div className="flex-1">
+              <h4 className="font-medium text-amber-800">Reset Data</h4>
+              <p className="text-sm text-amber-700 mt-1">
+                Delete all recipes, menus, and collections. Your login stays active.
+              </p>
+
+              {confirmReset !== 'data' ? (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="mt-3 text-amber-700 hover:bg-amber-100"
+                  onClick={() => setConfirmReset('data')}
+                >
+                  Reset Data
+                </Button>
+              ) : (
+                <div className="mt-3 flex gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="bg-amber-600 text-white hover:bg-amber-700"
+                    onClick={handleResetData}
+                    isLoading={isResetting}
+                  >
+                    Yes, Delete Data
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setConfirmReset(null)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Hard Reset Section */}
         <div className="border border-red-200 rounded-lg p-4 bg-red-50">
           <div className="flex items-start gap-3">
             <AlertTriangle className="text-red-500 flex-shrink-0 mt-0.5" size={20} />
             <div className="flex-1">
-              <h4 className="font-medium text-red-800">Reset All Data</h4>
+              <h4 className="font-medium text-red-800">Hard Reset</h4>
               <p className="text-sm text-red-600 mt-1">
-                This will delete all recipes, menus, and collections. This cannot be undone.
+                Delete everything and sign out. You'll need to enter your invite code again.
               </p>
 
-              {!confirmReset ? (
+              {confirmReset !== 'hard' ? (
                 <Button
                   variant="ghost"
                   size="sm"
                   className="mt-3 text-red-600 hover:bg-red-100"
-                  onClick={() => setConfirmReset(true)}
+                  onClick={() => setConfirmReset('hard')}
                 >
-                  Reset Everything
+                  Hard Reset
                 </Button>
               ) : (
                 <div className="mt-3 flex gap-2">
@@ -162,15 +224,15 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                     variant="ghost"
                     size="sm"
                     className="bg-red-600 text-white hover:bg-red-700"
-                    onClick={handleReset}
+                    onClick={handleHardReset}
                     isLoading={isResetting}
                   >
-                    Yes, Delete All
+                    Yes, Reset Everything
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => setConfirmReset(false)}
+                    onClick={() => setConfirmReset(null)}
                   >
                     Cancel
                   </Button>
