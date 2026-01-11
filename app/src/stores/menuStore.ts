@@ -20,6 +20,7 @@ interface MenuStore {
   // Active menu recipe operations
   addToActiveMenu: (recipeId: string, position?: { x: number; y: number }) => Promise<void>;
   removeFromActiveMenu: (recipeId: string) => Promise<void>;
+  clearActiveMenu: () => Promise<void>;
   updateLayout: (layout: MenuLayout[]) => Promise<void>;
 
   // Recipe box operations
@@ -102,6 +103,21 @@ export const useMenuStore = create<MenuStore>((set, get) => ({
     if (!activeMenuId) return;
 
     const updated = await menuDB.removeFromActive(activeMenuId, recipeId);
+    if (updated) {
+      set(state => ({
+        menus: state.menus.map(m => (m.id === activeMenuId ? updated : m)),
+      }));
+    }
+  },
+
+  clearActiveMenu: async () => {
+    const { activeMenuId } = get();
+    if (!activeMenuId) return;
+
+    const updated = await menuDB.update(activeMenuId, {
+      activeRecipeIds: [],
+      layout: [],
+    });
     if (updated) {
       set(state => ({
         menus: state.menus.map(m => (m.id === activeMenuId ? updated : m)),

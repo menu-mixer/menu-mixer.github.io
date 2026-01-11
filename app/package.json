@@ -10,7 +10,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@xyflow/react": "^12.10.0",
     "idb": "^8.0.3",
     "lucide-react": "^0.562.0",
     "react": "^19.2.0",

@@ -1,37 +1,22 @@
-import { useEffect, useState } from 'react';
-import { Search, MessageCircle, Sparkles, BarChart3, Plus } from 'lucide-react';
+import { useEffect } from 'react';
 import { useAuthStore, useRecipeStore, useMenuStore, useUIStore } from '@/stores';
-import type { ParsedRecipe } from '@/lib/ai/client';
 
 import { Sidebar } from '@/components/sidebar/Sidebar';
 import { InviteCodeModal } from '@/components/auth/InviteCodeModal';
 import { UsageBadge } from '@/components/auth/UsageBadge';
-import { MenuEditor } from '@/components/menu/MenuEditor';
-import { Backlog } from '@/components/menu/Backlog';
-import { DropZone } from '@/components/import/DropZone';
-import { ImportPreview } from '@/components/import/ImportPreview';
-import { ChatPanel } from '@/components/chat/ChatPanel';
+import { MenuArea } from '@/components/menu/MenuArea';
 import { OptimizationPanel } from '@/components/optimization/OptimizationPanel';
 import { ThemePanel } from '@/components/theming/ThemePanel';
-import { Dashboard } from '@/components/dashboard/Dashboard';
 import { RecipeEditForm } from '@/components/recipe/RecipeEditForm';
 import { SettingsModal } from '@/components/settings/SettingsModal';
 import { Modal } from '@/components/ui/Modal';
-import { Button } from '@/components/ui/Button';
 import { ToastContainer } from '@/components/ui/Toast';
-
-type View = 'editor' | 'dashboard';
 
 function App() {
   const { isAuthenticated, isLoading: authLoading, initialize: initAuth } = useAuthStore();
-  const { loadRecipes } = useRecipeStore();
+  const { loadRecipes, addRecipe } = useRecipeStore();
   const { loadMenus, loadRecipeBoxes } = useMenuStore();
-  const { searchQuery, setSearchQuery, activeModal, closeModal, openModal, addToast } = useUIStore();
-
-  const [view, setView] = useState<View>('editor');
-  const [showChat, setShowChat] = useState(false);
-  const [pendingImport, setPendingImport] = useState<ParsedRecipe[]>([]);
-  const [isImporting, setIsImporting] = useState(false);
+  const { activeModal, closeModal, addToast } = useUIStore();
 
   // Initialize auth and load data
   useEffect(() => {
@@ -45,45 +30,6 @@ function App() {
       loadRecipeBoxes();
     }
   }, [isAuthenticated, loadRecipes, loadMenus, loadRecipeBoxes]);
-
-  const handleRecipesParsed = (recipes: ParsedRecipe[]) => {
-    setPendingImport(recipes);
-    openModal('recipe-import');
-  };
-
-  const handleImportConfirm = async (recipes: ParsedRecipe[]) => {
-    setIsImporting(true);
-    try {
-      const { addRecipes } = useRecipeStore.getState();
-      const created = await addRecipes(
-        recipes.map((r) => ({
-          name: r.name,
-          description: r.description || '',
-          instructions: r.instructions,
-          ingredients: r.ingredients.map((i) => ({
-            raw: i.quantity ? `${i.quantity} ${i.item}`.trim() : i.item,
-            quantity: i.quantity || '',
-            item: i.item,
-          })),
-          metadata: {
-            tags: r.tags.filter((t): t is any =>
-              ['vegan', 'vegetarian', 'gluten-free', 'nut-free', 'dairy-free'].includes(t)
-            ),
-            prepTime: r.prepTime,
-            assemblyTime: r.assemblyTime,
-            ingredientCost: r.cost,
-          },
-        }))
-      );
-      addToast('success', `Imported ${created.length} recipe(s)`);
-      closeModal();
-      setPendingImport([]);
-    } catch (err) {
-      addToast('error', 'Failed to import recipes');
-    } finally {
-      setIsImporting(false);
-    }
-  };
 
   // Show loading state
   if (authLoading) {
@@ -117,142 +63,21 @@ function App() {
 
   return (
     <div className="min-h-screen flex bg-gray-50">
-      {/* Sidebar */}
+      {/* Sidebar (Dashboard) */}
       <Sidebar />
 
       {/* Main content */}
       <div className="flex-1 flex flex-col min-h-screen">
         {/* Header */}
-        <header className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            {/* View toggle */}
-            <div className="flex bg-gray-100 rounded-lg p-1">
-              <button
-                onClick={() => setView('editor')}
-                className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
-                  view === 'editor' ? 'bg-white shadow text-gray-900' : 'text-gray-600'
-                }`}
-              >
-                Editor
-              </button>
-              <button
-                onClick={() => setView('dashboard')}
-                className={`px-3 py-1.5 text-sm rounded-md transition-colors flex items-center gap-1 ${
-                  view === 'dashboard' ? 'bg-white shadow text-gray-900' : 'text-gray-600'
-                }`}
-              >
-                <BarChart3 size={14} />
-                Dashboard
-              </button>
-            </div>
-
-            {/* Search */}
-            <div className="relative">
-              <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search recipes..."
-                className="pl-10 pr-4 py-2 w-64 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-              />
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            {/* Action buttons */}
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => openModal('optimization')}
-            >
-              <Sparkles size={16} className="mr-1" />
-              Optimize
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => openModal('theme')}
-            >
-              Re-theme
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => setShowChat(!showChat)}
-            >
-              <MessageCircle size={16} className="mr-1" />
-              Chat
-            </Button>
-
-            <div className="w-px h-6 bg-gray-200" />
-
-            <UsageBadge />
-          </div>
+        <header className="bg-white border-b border-gray-200 px-4 py-2 flex items-center justify-end">
+          <UsageBadge />
         </header>
 
-        {/* Main area */}
-        <div className="flex-1 flex overflow-hidden">
-          <div className="flex-1 flex flex-col">
-            {view === 'editor' ? (
-              <>
-                {/* Menu Editor */}
-                <div className="flex-1 min-h-0">
-                  <MenuEditor />
-                </div>
-
-                {/* Backlog */}
-                <div className="h-72 border-t border-gray-200 bg-white overflow-y-auto p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-medium text-gray-700">Recipe Backlog</h3>
-                    <Button size="sm" variant="secondary" onClick={() => openModal('recipe-edit')}>
-                      <Plus size={14} className="mr-1" />
-                      Add Recipe
-                    </Button>
-                  </div>
-                  <Backlog />
-                </div>
-
-                {/* Drop Zone */}
-                <div className="p-4 border-t border-gray-200 bg-gray-50">
-                  <DropZone onRecipesParsed={handleRecipesParsed} />
-                </div>
-              </>
-            ) : (
-              <Dashboard />
-            )}
-          </div>
-
-          {/* Chat Panel */}
-          {showChat && (
-            <div className="w-80 flex-shrink-0">
-              <ChatPanel onClose={() => setShowChat(false)} />
-            </div>
-          )}
-        </div>
+        {/* Menu Area */}
+        <MenuArea />
       </div>
 
       {/* Modals */}
-      <Modal
-        isOpen={activeModal === 'recipe-import'}
-        onClose={() => {
-          closeModal();
-          setPendingImport([]);
-        }}
-        title="Import Recipes"
-        size="lg"
-      >
-        <ImportPreview
-          recipes={pendingImport}
-          onImport={handleImportConfirm}
-          onCancel={() => {
-            closeModal();
-            setPendingImport([]);
-          }}
-          isLoading={isImporting}
-        />
-      </Modal>
-
       <Modal
         isOpen={activeModal === 'recipe-edit'}
         onClose={closeModal}
@@ -261,7 +86,6 @@ function App() {
       >
         <RecipeEditForm
           onSave={async (data) => {
-            const { addRecipe } = useRecipeStore.getState();
             await addRecipe(data as any);
             addToast('success', 'Recipe added');
             closeModal();

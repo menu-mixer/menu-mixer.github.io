@@ -1,30 +1,71 @@
-import { useState } from 'react';
+import { useMemo } from 'react';
 import {
   ChefHat,
-  FolderOpen,
-  Plus,
   Settings,
   LogOut,
   ChevronLeft,
   ChevronRight,
+  PieChart,
+  Package,
+  DollarSign,
+  Sparkles,
 } from 'lucide-react';
-import { useMenuStore, useAuthStore, useUIStore } from '@/stores';
-import { Button } from '@/components/ui/Button';
+import { useMenuStore, useRecipeStore, useAuthStore, useUIStore } from '@/stores';
+import type { DietaryTag } from '@/types';
+import { DIETARY_TAGS } from '@/types';
 
 export function Sidebar() {
-  const { menus, activeMenuId, setActiveMenu, createMenu, recipeBoxes, createRecipeBox } = useMenuStore();
   const { logout } = useAuthStore();
   const { sidebarCollapsed, toggleSidebar, openModal } = useUIStore();
-  const [isCreatingMenu, setIsCreatingMenu] = useState(false);
-  const [newMenuName, setNewMenuName] = useState('');
+  const { recipes } = useRecipeStore();
+  const { getActiveMenu } = useMenuStore();
 
-  const handleCreateMenu = async () => {
-    if (!newMenuName.trim()) return;
-    const menu = await createMenu(newMenuName.trim());
-    setActiveMenu(menu.id);
-    setNewMenuName('');
-    setIsCreatingMenu(false);
-  };
+  const activeMenu = getActiveMenu();
+
+  const stats = useMemo(() => {
+    const menuRecipes = activeMenu
+      ? recipes.filter((r) => activeMenu.activeRecipeIds.includes(r.id))
+      : [];
+
+    const totalCost = menuRecipes.reduce(
+      (sum, r) => sum + (r.metadata.ingredientCost || 0),
+      0
+    );
+
+    const ingredients = new Map<string, number>();
+    menuRecipes.forEach((r) => {
+      r.ingredients.forEach((ing) => {
+        const key = ing.item.toLowerCase();
+        ingredients.set(key, (ingredients.get(key) || 0) + 1);
+      });
+    });
+
+    const dietaryCounts: Record<DietaryTag, number> = {
+      vegan: 0,
+      vegetarian: 0,
+      'gluten-free': 0,
+      'nut-free': 0,
+      'dairy-free': 0,
+    };
+
+    menuRecipes.forEach((r) => {
+      r.metadata.tags.forEach((tag) => {
+        if (tag in dietaryCounts) {
+          dietaryCounts[tag]++;
+        }
+      });
+    });
+
+    return {
+      recipeCount: menuRecipes.length,
+      totalCost,
+      ingredientCount: ingredients.size,
+      ingredients: Array.from(ingredients.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 8),
+      dietaryCounts,
+    };
+  }, [activeMenu, recipes]);
 
   if (sidebarCollapsed) {
     return (
@@ -52,84 +93,88 @@ export function Sidebar() {
         </button>
       </div>
 
-      {/* Menus */}
-      <div className="flex-1 overflow-y-auto p-4">
-        <div className="mb-4">
-          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-            Menus
+      {/* Dashboard Content */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {/* Summary Stats */}
+        <div className="space-y-2">
+          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+            Menu Summary
           </h3>
-          <div className="space-y-1">
-            {menus.map((menu) => (
-              <button
-                key={menu.id}
-                onClick={() => setActiveMenu(menu.id)}
-                className={`
-                  w-full text-left px-3 py-2 rounded-lg text-sm transition-colors
-                  ${activeMenuId === menu.id
-                    ? 'bg-primary-100 text-primary-700 font-medium'
-                    : 'text-gray-700 hover:bg-gray-100'}
-                `}
-              >
-                {menu.name}
-                <span className="text-xs text-gray-400 ml-1">
-                  ({menu.activeRecipeIds.length})
-                </span>
-              </button>
-            ))}
+          <div className="grid grid-cols-2 gap-2">
+            <StatCard icon={<ChefHat size={14} />} label="Recipes" value={stats.recipeCount} />
+            <StatCard icon={<Package size={14} />} label="Ingredients" value={stats.ingredientCount} />
           </div>
-
-          {isCreatingMenu ? (
-            <div className="mt-2 flex gap-1">
-              <input
-                value={newMenuName}
-                onChange={(e) => setNewMenuName(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleCreateMenu()}
-                placeholder="Menu name"
-                className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-primary-500"
-                autoFocus
-              />
-              <Button size="sm" onClick={handleCreateMenu}>
-                Add
-              </Button>
+          <div className="bg-white rounded-lg border border-gray-200 p-3">
+            <div className="flex items-center gap-2 text-gray-500 text-xs mb-1">
+              <DollarSign size={14} />
+              <span>Total Cost</span>
             </div>
-          ) : (
-            <button
-              onClick={() => setIsCreatingMenu(true)}
-              className="w-full mt-2 flex items-center gap-1 px-3 py-1.5 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
-            >
-              <Plus size={16} /> New Menu
-            </button>
-          )}
+            <p className="text-lg font-semibold text-gray-900">${stats.totalCost.toFixed(2)}</p>
+          </div>
         </div>
 
-        {/* Recipe Boxes */}
-        <div>
-          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-            Collections
-          </h3>
-          <div className="space-y-1">
-            {recipeBoxes.map((box) => (
-              <button
-                key={box.id}
-                className="w-full text-left px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-              >
-                <FolderOpen size={16} />
-                {box.name}
-                <span className="text-xs text-gray-400">({box.recipeIds.length})</span>
-              </button>
-            ))}
+        {/* Dietary Coverage */}
+        {stats.recipeCount > 0 && (
+          <div>
+            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1">
+              <PieChart size={12} />
+              Dietary Coverage
+            </h3>
+            <div className="bg-white rounded-lg border border-gray-200 p-3 space-y-2">
+              {(Object.keys(DIETARY_TAGS) as DietaryTag[]).map((tag) => {
+                const count = stats.dietaryCounts[tag];
+                const percent = stats.recipeCount > 0 ? (count / stats.recipeCount) * 100 : 0;
+                return (
+                  <div key={tag} className="flex items-center gap-2">
+                    <span className={`text-xs w-16 truncate ${DIETARY_TAGS[tag].color}`}>
+                      {DIETARY_TAGS[tag].label}
+                    </span>
+                    <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all"
+                        style={{ width: `${percent}%`, backgroundColor: getTagColor(tag) }}
+                      />
+                    </div>
+                    <span className="text-xs text-gray-400 w-4 text-right">{count}</span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
-          <button
-            onClick={() => createRecipeBox('New Collection')}
-            className="w-full mt-2 flex items-center gap-1 px-3 py-1.5 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
-          >
-            <Plus size={16} /> New Collection
-          </button>
-        </div>
+        )}
+
+        {/* Top Ingredients */}
+        {stats.ingredients.length > 0 && (
+          <div>
+            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1">
+              <Package size={12} />
+              Top Ingredients
+            </h3>
+            <div className="bg-white rounded-lg border border-gray-200 p-3">
+              <div className="space-y-1">
+                {stats.ingredients.map(([ingredient, count]) => (
+                  <div key={ingredient} className="flex items-center justify-between">
+                    <span className="text-xs text-gray-700 truncate">{ingredient}</span>
+                    <span className="text-xs text-gray-400">{count}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Optimize Button */}
+        <button
+          onClick={() => openModal('optimization')}
+          className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+        >
+          <Sparkles size={16} />
+          Optimize Menu
+        </button>
       </div>
 
       {/* Footer */}
-      <div className="p-4 border-t border-gray-200 space-y-2">
+      <div className="p-4 border-t border-gray-200 space-y-1">
         <button
           onClick={() => openModal('settings')}
           className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg"
@@ -145,4 +190,27 @@ export function Sidebar() {
       </div>
     </div>
   );
+}
+
+function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: number }) {
+  return (
+    <div className="bg-white rounded-lg border border-gray-200 p-3">
+      <div className="flex items-center gap-1 text-gray-500 text-xs mb-0.5">
+        {icon}
+        <span>{label}</span>
+      </div>
+      <p className="text-lg font-semibold text-gray-900">{value}</p>
+    </div>
+  );
+}
+
+function getTagColor(tag: DietaryTag): string {
+  const colors = {
+    vegan: '#22c55e',
+    vegetarian: '#84cc16',
+    'gluten-free': '#f59e0b',
+    'nut-free': '#f97316',
+    'dairy-free': '#3b82f6',
+  };
+  return colors[tag];
 }
