@@ -123,7 +123,10 @@ export function Sidebar() {
                 const percent = stats.recipeCount > 0 ? (count / stats.recipeCount) * 100 : 0;
                 return (
                   <div key={tag} className="flex items-center gap-2">
-                    <span className={`text-xs w-16 truncate ${DIETARY_TAGS[tag].color}`}>
+                    <span
+                      className={`text-xs w-16 truncate ${DIETARY_TAGS[tag].color}`}
+                      title={DIETARY_TAGS[tag].description}
+                    >
                       {DIETARY_TAGS[tag].label}
                     </span>
                     <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">

@@ -1,9 +1,10 @@
 import { useState, useRef } from 'react';
-import { AlertTriangle, Download, Upload } from 'lucide-react';
+import { AlertTriangle, Download, Upload, Tag } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { useAuthStore, useUIStore, useRecipeStore, useMenuStore } from '@/stores';
 import { exportToZip, importFromZip, downloadBlob } from '@/lib/export';
+import { DIETARY_TAGS, type DietaryTag } from '@/types';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -119,6 +120,27 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Settings" size="sm">
       <div className="space-y-6">
+        {/* Tag Reference Section */}
+        <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+          <h4 className="font-medium text-gray-800 mb-3 flex items-center gap-2">
+            <Tag size={16} />
+            Dietary Tags
+          </h4>
+          <div className="space-y-2">
+            {(Object.keys(DIETARY_TAGS) as DietaryTag[]).map((tag) => {
+              const config = DIETARY_TAGS[tag];
+              return (
+                <div key={tag} className="flex items-center gap-3">
+                  <span className={`inline-flex items-center rounded-full font-medium px-2 py-0.5 text-xs ${config.bgColor} ${config.color}`}>
+                    {config.label}
+                  </span>
+                  <span className="text-sm text-gray-600">{config.description}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
         {/* Export/Import Section */}
         <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
           <h4 className="font-medium text-gray-800 mb-3">Data Management</h4>

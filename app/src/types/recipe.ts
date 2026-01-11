@@ -78,10 +78,10 @@ export interface Menu {
   updatedAt: string;
 }
 
-export const DIETARY_TAGS: Record<DietaryTag, { label: string; color: string; bgColor: string }> = {
-  vegan: { label: 'Vegan', color: 'text-green-700', bgColor: 'bg-green-100' },
-  vegetarian: { label: 'Veg', color: 'text-lime-700', bgColor: 'bg-lime-100' },
-  'gluten-free': { label: 'GF', color: 'text-amber-700', bgColor: 'bg-amber-100' },
-  'nut-free': { label: 'NF', color: 'text-orange-700', bgColor: 'bg-orange-100' },
-  'dairy-free': { label: 'DF', color: 'text-blue-700', bgColor: 'bg-blue-100' },
+export const DIETARY_TAGS: Record<DietaryTag, { label: string; description: string; color: string; bgColor: string }> = {
+  vegan: { label: 'Vegan', description: 'Contains no animal products', color: 'text-green-700', bgColor: 'bg-green-100' },
+  vegetarian: { label: 'Veg', description: 'Vegetarian - no meat or fish', color: 'text-lime-700', bgColor: 'bg-lime-100' },
+  'gluten-free': { label: 'GF', description: 'Gluten-Free - no wheat, barley, or rye', color: 'text-amber-700', bgColor: 'bg-amber-100' },
+  'nut-free': { label: 'NF', description: 'Nut-Free - no tree nuts or peanuts', color: 'text-orange-700', bgColor: 'bg-orange-100' },
+  'dairy-free': { label: 'DF', description: 'Dairy-Free - no milk products', color: 'text-blue-700', bgColor: 'bg-blue-100' },
 };

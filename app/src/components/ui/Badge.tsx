@@ -16,7 +16,10 @@ export function DietaryBadge({ tag, size = 'sm' }: BadgeProps) {
   };
 
   return (
-    <span className={`inline-flex items-center rounded-full font-medium ${config.bgColor} ${config.color} ${sizes[size]}`}>
+    <span
+      className={`inline-flex items-center rounded-full font-medium ${config.bgColor} ${config.color} ${sizes[size]}`}
+      title={config.description}
+    >
       {config.label}
     </span>
   );
