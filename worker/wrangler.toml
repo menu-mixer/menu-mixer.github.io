@@ -5,10 +5,9 @@ compatibility_date = "2024-01-01"
 [vars]
 ENVIRONMENT = "production"
 
-# KV Namespaces - will be added after creation
-# [[kv_namespaces]]
-# binding = "INVITE_CODES"
-# id = ""
+[[kv_namespaces]]
+binding = "INVITE_CODES"
+id = "1a3b19c012a9486cbeb9c52f10c36cf2"
 
 # Secrets (set via: npx wrangler secret put SECRET_NAME)
 # OPENAI_API_KEY
