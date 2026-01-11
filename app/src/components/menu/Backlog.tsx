@@ -4,8 +4,8 @@ import { RecipeCard } from '@/components/recipe/RecipeCard';
 
 export function Backlog() {
   const { getActiveMenu } = useMenuStore();
-  const { recipes } = useRecipeStore();
-  const { searchQuery } = useUIStore();
+  const { recipes, deleteRecipe } = useRecipeStore();
+  const { searchQuery, addToast } = useUIStore();
 
   const activeMenu = getActiveMenu();
 
@@ -43,10 +43,21 @@ export function Backlog() {
     );
   }
 
+  const handleDelete = async (id: string) => {
+    await deleteRecipe(id);
+    addToast('success', 'Recipe deleted');
+  };
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
       {backlogRecipes.map((recipe) => (
-        <RecipeCard key={recipe.id} recipe={recipe} draggable compact />
+        <RecipeCard
+          key={recipe.id}
+          recipe={recipe}
+          draggable
+          compact
+          onDelete={handleDelete}
+        />
       ))}
     </div>
   );

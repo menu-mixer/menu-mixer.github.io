@@ -33,12 +33,25 @@ export function RecipeCard({
   if (compact) {
     return (
       <div
-        className="bg-white border border-gray-200 rounded-lg p-3 hover:shadow-md transition-shadow cursor-pointer"
+        className="bg-white border border-gray-200 rounded-lg p-3 hover:shadow-md transition-shadow cursor-pointer group"
         draggable={draggable}
         onDragStart={handleDragStart}
         onClick={onClick}
       >
-        <h3 className="font-medium text-gray-900 truncate">{recipe.name}</h3>
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="font-medium text-gray-900 truncate">{recipe.name}</h3>
+          {onDelete && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(recipe.id);
+              }}
+              className="p-1 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <Trash2 size={14} />
+            </button>
+          )}
+        </div>
         <div className="flex gap-1 mt-1 flex-wrap">
           {recipe.metadata.tags.slice(0, 3).map((tag) => (
             <DietaryBadge key={tag} tag={tag} size="sm" />

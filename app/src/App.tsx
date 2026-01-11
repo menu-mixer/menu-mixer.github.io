@@ -15,6 +15,7 @@ import { OptimizationPanel } from '@/components/optimization/OptimizationPanel';
 import { ThemePanel } from '@/components/theming/ThemePanel';
 import { Dashboard } from '@/components/dashboard/Dashboard';
 import { RecipeEditForm } from '@/components/recipe/RecipeEditForm';
+import { SettingsModal } from '@/components/settings/SettingsModal';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { ToastContainer } from '@/components/ui/Toast';
@@ -286,6 +287,8 @@ function App() {
           </div>
         </div>
       )}
+
+      <SettingsModal isOpen={activeModal === 'settings'} onClose={closeModal} />
 
       <ToastContainer />
     </div>
