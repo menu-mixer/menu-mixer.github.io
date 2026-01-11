@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuthStore, useRecipeStore, useMenuStore, useUIStore } from '@/stores';
 
 import { Sidebar } from '@/components/sidebar/Sidebar';
@@ -9,14 +9,17 @@ import { OptimizationPanel } from '@/components/optimization/OptimizationPanel';
 import { ThemePanel } from '@/components/theming/ThemePanel';
 import { RecipeEditForm } from '@/components/recipe/RecipeEditForm';
 import { SettingsModal } from '@/components/settings/SettingsModal';
+import { OnboardingModal } from '@/components/onboarding/OnboardingModal';
 import { Modal } from '@/components/ui/Modal';
 import { ToastContainer } from '@/components/ui/Toast';
+import { getStarterPack, loadStarterPack } from '@/lib/starterPack';
 
 function App() {
-  const { isAuthenticated, isLoading: authLoading, initialize: initAuth } = useAuthStore();
+  const { isAuthenticated, isLoading: authLoading, initialize: initAuth, isFirstLogin, clearFirstLogin, starterPackId } = useAuthStore();
   const { loadRecipes, addRecipe } = useRecipeStore();
   const { loadMenus, loadRecipeBoxes } = useMenuStore();
-  const { activeModal, closeModal, addToast } = useUIStore();
+  const { activeModal, closeModal, addToast, hasCompletedOnboarding, completeOnboarding } = useUIStore();
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   // Initialize auth and load data
   useEffect(() => {
@@ -30,6 +33,34 @@ function App() {
       loadRecipeBoxes();
     }
   }, [isAuthenticated, loadRecipes, loadMenus, loadRecipeBoxes]);
+
+  // Show onboarding for first-time users
+  useEffect(() => {
+    if (isFirstLogin && !hasCompletedOnboarding()) {
+      setShowOnboarding(true);
+    }
+  }, [isFirstLogin, hasCompletedOnboarding]);
+
+  const handleOnboardingComplete = async () => {
+    // If there's a starter pack and user hasn't loaded data yet, load it
+    if (starterPackId) {
+      const pack = getStarterPack(starterPackId);
+      if (pack) {
+        try {
+          await loadStarterPack(pack);
+        } catch (err) {
+          console.error('Failed to load starter pack:', err);
+        }
+      }
+    }
+
+    completeOnboarding();
+    clearFirstLogin();
+    setShowOnboarding(false);
+
+    // Reload to refresh all data
+    window.location.reload();
+  };
 
   // Show loading state
   if (authLoading) {
@@ -113,6 +144,12 @@ function App() {
       )}
 
       <SettingsModal isOpen={activeModal === 'settings'} onClose={closeModal} />
+
+      <OnboardingModal
+        isOpen={showOnboarding}
+        onComplete={handleOnboardingComplete}
+        hasStarterPack={!!starterPackId}
+      />
 
       <ToastContainer />
     </div>

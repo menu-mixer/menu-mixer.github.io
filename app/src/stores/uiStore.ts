@@ -2,6 +2,8 @@ import { create } from 'zustand';
 
 type ModalType = 'invite-code' | 'recipe-edit' | 'recipe-import' | 'optimization' | 'theme' | 'chat' | 'settings' | null;
 
+const ONBOARDING_COMPLETE_KEY = 'menu-mixer-onboarding-complete';
+
 interface Toast {
   id: string;
   type: 'success' | 'error' | 'info';
@@ -14,6 +16,12 @@ interface UIStore {
   modalData: unknown;
   openModal: (type: ModalType, data?: unknown) => void;
   closeModal: () => void;
+
+  // Onboarding
+  showOnboarding: boolean;
+  setShowOnboarding: (show: boolean) => void;
+  completeOnboarding: () => void;
+  hasCompletedOnboarding: () => boolean;
 
   // Sidebar
   sidebarCollapsed: boolean;
@@ -49,6 +57,17 @@ export const useUIStore = create<UIStore>((set) => ({
   modalData: null,
   openModal: (type, data) => set({ activeModal: type, modalData: data }),
   closeModal: () => set({ activeModal: null, modalData: null }),
+
+  // Onboarding
+  showOnboarding: false,
+  setShowOnboarding: (show) => set({ showOnboarding: show }),
+  completeOnboarding: () => {
+    localStorage.setItem(ONBOARDING_COMPLETE_KEY, 'true');
+    set({ showOnboarding: false });
+  },
+  hasCompletedOnboarding: () => {
+    return localStorage.getItem(ONBOARDING_COMPLETE_KEY) === 'true';
+  },
 
   sidebarCollapsed: false,
   toggleSidebar: () => set(state => ({ sidebarCollapsed: !state.sidebarCollapsed })),

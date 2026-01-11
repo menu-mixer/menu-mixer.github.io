@@ -7,11 +7,12 @@ import {
   refreshToken,
   getUsage,
 } from '@/lib/ai/client';
-import { getStarterPack, loadStarterPack } from '@/lib/starterPack';
+// Starter pack loading is handled by OnboardingModal in App.tsx
 
 interface AuthStore extends AuthState {
   isLoading: boolean;
   error: string | null;
+  isFirstLogin: boolean; // True when user just logged in (not page reload)
 
   initialize: () => Promise<void>;
   login: (inviteCode: string) => Promise<void>;
@@ -19,6 +20,7 @@ interface AuthStore extends AuthState {
   refresh: () => Promise<void>;
   fetchUsage: () => Promise<void>;
   updateLimits: (limits: Partial<TierLimits>) => void;
+  clearFirstLogin: () => void;
 }
 
 export const useAuthStore = create<AuthStore>((set, get) => ({
@@ -29,6 +31,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   starterPackId: null,
   isLoading: true,
   error: null,
+  isFirstLogin: false,
 
   initialize: async () => {
     const stored = loadAuth();
@@ -49,21 +52,9 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const authState = await validateInviteCode(inviteCode);
-      set({ ...authState, isLoading: false });
-
-      // Load starter pack if present
-      if (authState.starterPackId) {
-        const pack = getStarterPack(authState.starterPackId);
-        if (pack) {
-          try {
-            await loadStarterPack(pack);
-            // Trigger a page reload to refresh stores with new data
-            window.location.reload();
-          } catch (err) {
-            console.error('Failed to load starter pack:', err);
-          }
-        }
-      }
+      // Mark as first login to trigger onboarding
+      set({ ...authState, isLoading: false, isFirstLogin: true });
+      // Note: Starter pack loading is now handled by OnboardingModal
     } catch (err) {
       set({
         isLoading: false,
@@ -120,5 +111,9 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     set(state => ({
       limits: state.limits ? { ...state.limits, ...limits } : null,
     }));
+  },
+
+  clearFirstLogin: () => {
+    set({ isFirstLogin: false });
   },
 }));
