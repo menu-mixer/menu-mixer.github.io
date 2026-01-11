@@ -83,6 +83,30 @@ export function RecipeBox({ onRecipesParsed }: RecipeBoxProps) {
     return textParts.join('\n\n');
   };
 
+  // Render PDF page to image (for image-only PDFs)
+  const renderPdfPageToImage = async (file: File): Promise<string> => {
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    const page = await pdf.getPage(1); // Get first page
+
+    const scale = 2; // Higher scale = better quality
+    const viewport = page.getViewport({ scale });
+
+    const canvas = document.createElement('canvas');
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+
+    const context = canvas.getContext('2d');
+    if (!context) throw new Error('Could not get canvas context');
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await page.render({ canvasContext: context, viewport } as any).promise;
+
+    // Convert to base64 (remove data:image/png;base64, prefix)
+    const dataUrl = canvas.toDataURL('image/png');
+    return dataUrl.split(',')[1];
+  };
+
   // File handling
   const processFile = async (file: File) => {
     setIsProcessing(true);
@@ -94,13 +118,16 @@ export function RecipeBox({ onRecipesParsed }: RecipeBoxProps) {
         contentType = 'image';
         content = await fileToBase64(file);
       } else if (file.type === 'application/pdf') {
-        // Extract text from PDF instead of sending base64
-        contentType = 'text';
-        content = await extractPdfText(file);
-        if (!content.trim()) {
-          addToast('info', 'PDF appears to be image-only. Try taking a screenshot instead.');
-          setIsProcessing(false);
-          return;
+        // Try to extract text from PDF first
+        const pdfText = await extractPdfText(file);
+        if (pdfText.trim()) {
+          // PDF has text content
+          contentType = 'text';
+          content = pdfText;
+        } else {
+          // PDF is image-only, render to image and use vision
+          contentType = 'image';
+          content = await renderPdfPageToImage(file);
         }
       } else {
         contentType = 'text';
