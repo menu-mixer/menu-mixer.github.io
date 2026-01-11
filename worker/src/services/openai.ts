@@ -200,26 +200,49 @@ Return JSON array:
   }
 }
 
+function extractIngredientSummary(recipes: ParsedRecipe[]): string {
+  const ingredientCount = new Map<string, number>();
+  for (const recipe of recipes) {
+    for (const ing of recipe.ingredients) {
+      const item = ing.item.toLowerCase();
+      ingredientCount.set(item, (ingredientCount.get(item) || 0) + 1);
+    }
+  }
+  // Get ingredients used in 2+ recipes (shared ingredients)
+  const shared = [...ingredientCount.entries()]
+    .filter(([, count]) => count >= 2)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 15)
+    .map(([item]) => item);
+  return shared.join(', ');
+}
+
 export async function chat(
   apiKey: string,
   messages: { role: string; content: string }[],
   context?: { recipes: ParsedRecipe[]; activeMenu: string[] }
 ): Promise<{ response: string; tokensUsed: number }> {
+  const sharedIngredients = context ? extractIngredientSummary(context.recipes) : '';
+
   const systemPrompt = `You are a helpful menu planning assistant for Menu Mixer, an app for bakers, cafe owners, and caterers.
 
 ${context ? `Context:
 - User has ${context.recipes.length} recipes in their library
 - Active menu has ${context.activeMenu.length} items
-- Recipe names: ${context.recipes.map(r => r.name).join(', ')}` : ''}
+- Recipe names: ${context.recipes.map(r => r.name).join(', ')}
+- Ingredients already in use: ${sharedIngredients || 'none yet'}
+
+Full recipe data with ingredients is available - when users ask to create dishes using existing ingredients, reference ingredients from their current recipes.` : ''}
 
 You can help with:
 - Finding recipes by ingredient or dietary requirement
 - Suggesting additions to balance a menu
 - Answering questions about recipes
-- Generating new recipe ideas
+- Generating new recipe ideas that reuse ingredients from existing recipes
 
 When suggesting recipes that exist in their library, reference them by name.
-When generating new recipe ideas, format as JSON if asked.`;
+When generating new recipe ideas, format as JSON if asked.
+When asked to create dishes using existing ingredients, focus on ingredients already in their menu to minimize waste and inventory.`;
 
   const apiMessages: OpenAIMessage[] = [
     { role: 'system', content: systemPrompt },

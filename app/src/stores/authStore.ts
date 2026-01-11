@@ -7,6 +7,7 @@ import {
   refreshToken,
   getUsage,
 } from '@/lib/ai/client';
+import { getStarterPack, loadStarterPack } from '@/lib/starterPack';
 
 interface AuthStore extends AuthState {
   isLoading: boolean;
@@ -25,6 +26,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   token: null,
   tier: null,
   limits: null,
+  starterPackId: null,
   isLoading: true,
   error: null,
 
@@ -48,6 +50,20 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     try {
       const authState = await validateInviteCode(inviteCode);
       set({ ...authState, isLoading: false });
+
+      // Load starter pack if present
+      if (authState.starterPackId) {
+        const pack = getStarterPack(authState.starterPackId);
+        if (pack) {
+          try {
+            await loadStarterPack(pack);
+            // Trigger a page reload to refresh stores with new data
+            window.location.reload();
+          } catch (err) {
+            console.error('Failed to load starter pack:', err);
+          }
+        }
+      }
     } catch (err) {
       set({
         isLoading: false,
@@ -64,6 +80,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       token: null,
       tier: null,
       limits: null,
+      starterPackId: null,
       error: null,
     });
   },
@@ -79,6 +96,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
           token: null,
           tier: null,
           limits: null,
+          starterPackId: null,
         });
       }
       throw err;

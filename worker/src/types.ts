@@ -18,6 +18,7 @@ export interface InviteCode {
   maxUsage?: number;
   currentUsage: number;
   isActive: boolean;
+  starterPackId?: string; // Optional starter pack to load on first use
 }
 
 export interface Session {
@@ -73,6 +74,7 @@ export interface ValidateResponse {
     maxAiCalls: number;
     remainingAiCalls: number;
   };
+  starterPackId?: string;
   error?: string;
 }
 

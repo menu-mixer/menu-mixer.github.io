@@ -55,6 +55,7 @@ export async function handleValidate(
         maxAiCalls: limits.monthlyAiCalls,
         remainingAiCalls: rateLimit.remaining,
       },
+      starterPackId: inviteData.starterPackId,
     };
 
     return jsonResponse(response, 200, request);

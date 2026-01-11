@@ -68,6 +68,7 @@ export async function validateInviteCode(code: string): Promise<AuthState> {
     token: data.token,
     tier: data.tier,
     limits: data.limits,
+    starterPackId: data.starterPackId || null,
   };
 
   persistAuth(authState);
