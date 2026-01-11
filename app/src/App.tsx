@@ -60,8 +60,8 @@ function App() {
           description: r.description || '',
           instructions: r.instructions,
           ingredients: r.ingredients.map((i) => ({
-            raw: `${i.quantity} ${i.item}`.trim(),
-            quantity: i.quantity,
+            raw: i.quantity ? `${i.quantity} ${i.item}`.trim() : i.item,
+            quantity: i.quantity || '',
             item: i.item,
           })),
           metadata: {
