@@ -9,6 +9,10 @@ ENVIRONMENT = "production"
 binding = "INVITE_CODES"
 id = "1a3b19c012a9486cbeb9c52f10c36cf2"
 
+[[kv_namespaces]]
+binding = "USAGE"
+id = "68fe4866b85f4b10b8c4d53f97c9d6bd"
+
 # Secrets (set via: npx wrangler secret put SECRET_NAME)
 # OPENAI_API_KEY
 # JWT_SECRET
