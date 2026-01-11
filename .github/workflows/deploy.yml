@@ -37,7 +37,7 @@ jobs:
       - name: Build
         run: npm run build
         env:
-          VITE_API_URL: https://menu-mixer-api.workers.dev
+          VITE_API_URL: https://menu-mixer-api.github-f2b.workers.dev
 
       - name: Setup Pages
         uses: actions/configure-pages@v4

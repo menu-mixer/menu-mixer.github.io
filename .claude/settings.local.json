@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run build:*)",
+      "Bash(npm ci:*)",
+      "Bash(npx wrangler deploy)",
+      "Bash(gh api:*)",
+      "Bash(npx wrangler secret put:*)",
+      "Bash(openssl rand:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
+    ]
+  }
+}
