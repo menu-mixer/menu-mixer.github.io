@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Clock, DollarSign, ChevronDown, ChevronUp, Trash2, Edit2, Plus, X } from 'lucide-react';
 import type { RecipeDisplayData } from '@/types';
 import { DietaryBadge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
 
 interface RecipeCardProps {
   recipe: RecipeDisplayData;
@@ -95,6 +94,18 @@ export function RecipeCard({
 
           {/* Action Buttons */}
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            {onEdit && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit(recipe);
+                }}
+                className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded"
+                title="Edit"
+              >
+                <Edit2 size={14} />
+              </button>
+            )}
             {onAdd && !isInMenu && (
               <button
                 onClick={(e) => {
@@ -186,16 +197,6 @@ export function RecipeCard({
                 Notes
               </h4>
               <p className="text-sm text-gray-500 italic">{recipe.notes}</p>
-            </div>
-          )}
-
-          {/* Edit Action */}
-          {onEdit && (
-            <div className="pt-2">
-              <Button size="sm" variant="secondary" onClick={() => onEdit(recipe)}>
-                <Edit2 size={14} className="mr-1" />
-                Edit Recipe
-              </Button>
             </div>
           )}
         </div>
