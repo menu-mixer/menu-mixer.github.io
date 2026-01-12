@@ -8,7 +8,7 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   base: '/mixer/',
   define: {
-    __BUILD_DATE__: JSON.stringify(new Date().toISOString().split('T')[0]),
+    __BUILD_DATE__: JSON.stringify(new Date().toISOString().slice(0, 16).replace('T', ' ')),
   },
   resolve: {
     alias: {
