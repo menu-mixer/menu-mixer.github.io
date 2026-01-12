@@ -5,6 +5,7 @@ import { useRecipeStore, useMenuStore, useUIStore, useAuthStore } from '@/stores
 import { RecipeCard } from './RecipeCard';
 import { parseRecipe } from '@/lib/ai/client';
 import type { ParsedRecipe } from '@/lib/ai/client';
+import type { RecipeDisplayData } from '@/types';
 
 // Set up PDF.js worker
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
@@ -16,7 +17,7 @@ interface RecipeBoxProps {
 export function RecipeBox({ onRecipesParsed }: RecipeBoxProps) {
   const { recipes, deleteRecipe } = useRecipeStore();
   const { recipeBoxes, getActiveMenu, addToActiveMenu, createRecipeBox, deleteRecipeBox } = useMenuStore();
-  const { addToast } = useUIStore();
+  const { addToast, openModal } = useUIStore();
   const { updateLimits } = useAuthStore();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -220,6 +221,10 @@ export function RecipeBox({ onRecipesParsed }: RecipeBoxProps) {
     addToast('success', 'Recipe deleted');
   };
 
+  const handleEdit = (recipe: RecipeDisplayData) => {
+    openModal('recipe-edit', recipe);
+  };
+
   const handleCreateBox = async () => {
     if (!newBoxName.trim()) return;
     const box = await createRecipeBox(newBoxName.trim());
@@ -403,6 +408,7 @@ export function RecipeBox({ onRecipesParsed }: RecipeBoxProps) {
                 isInMenu={activeMenuSourceIds.has(recipe.id)}
                 onAdd={handleAddToMenu}
                 onDelete={handleDelete}
+                onEdit={handleEdit}
               />
             ))}
           </div>

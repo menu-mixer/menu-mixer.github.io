@@ -1,11 +1,12 @@
 import { useCallback } from 'react';
 import { useMenuStore, useRecipeStore, useUIStore } from '@/stores';
+import type { MenuItem, RecipeDisplayData } from '@/types/recipe';
 import { RecipeCard } from '@/components/recipe/RecipeCard';
 
 export function ActiveMenuGrid() {
-  const { getActiveMenu, addToActiveMenu, removeFromActiveMenu } = useMenuStore();
+  const { getActiveMenu, addToActiveMenu, removeFromActiveMenu, updateMenuItem } = useMenuStore();
   const { recipes } = useRecipeStore();
-  const { addToast } = useUIStore();
+  const { addToast, openModal } = useUIStore();
 
   const activeMenu = getActiveMenu();
   const menuItems = activeMenu?.items || [];
@@ -39,6 +40,17 @@ export function ActiveMenuGrid() {
     addToast('success', 'Removed from menu');
   };
 
+  const handleEdit = (item: RecipeDisplayData) => {
+    openModal('recipe-edit', {
+      ...item,
+      isMenuItem: true,
+      onSaveCallback: async (updates: Partial<MenuItem>) => {
+        await updateMenuItem(item.id, updates);
+        addToast('success', 'Menu item updated');
+      }
+    });
+  };
+
   if (!activeMenu) {
     return (
       <div className="flex items-center justify-center h-full text-gray-500">
@@ -65,6 +77,7 @@ export function ActiveMenuGrid() {
               key={item.id}
               recipe={item}
               onRemove={handleRemove}
+              onEdit={handleEdit}
             />
           ))}
         </div>

@@ -4,6 +4,7 @@ import { MenuSelector } from './MenuSelector';
 import { ActiveMenuGrid } from './ActiveMenuGrid';
 import { MenuMutateRibbon } from './MenuMutateRibbon';
 import { RecipeBox } from '@/components/recipe/RecipeBox';
+import { UsageBadge } from '@/components/auth/UsageBadge';
 import { ImportPreview } from '@/components/import/ImportPreview';
 import { Modal } from '@/components/ui/Modal';
 import { useRecipeStore, useUIStore } from '@/stores';
@@ -15,7 +16,7 @@ export function MenuArea() {
 
   const [pendingImport, setPendingImport] = useState<ParsedRecipe[]>([]);
   const [isImporting, setIsImporting] = useState(false);
-  const [recipeBoxHeight, setRecipeBoxHeight] = useState(288); // Default 18rem
+  const [recipeBoxHeight, setRecipeBoxHeight] = useState(400); // Default ~50%
   const containerRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef(false);
 
@@ -88,8 +89,9 @@ export function MenuArea() {
   return (
     <div ref={containerRef} className="flex-1 flex flex-col min-h-0">
       {/* Menu Header */}
-      <div className="flex items-center gap-4 px-4 py-3 bg-white border-b border-gray-200">
+      <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200">
         <MenuSelector />
+        <UsageBadge />
       </div>
 
       {/* Active Menu Grid */}

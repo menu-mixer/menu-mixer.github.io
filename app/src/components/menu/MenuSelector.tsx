@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { ChevronDown, Plus, Check } from 'lucide-react';
+import { ChevronDown, Plus, Check, Trash2 } from 'lucide-react';
 import { useMenuStore } from '@/stores';
 
 export function MenuSelector() {
-  const { menus, activeMenuId, setActiveMenu, createMenu } = useMenuStore();
+  const { menus, activeMenuId, setActiveMenu, createMenu, deleteMenu } = useMenuStore();
   const [isOpen, setIsOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [newMenuName, setNewMenuName] = useState('');
@@ -47,7 +47,7 @@ export function MenuSelector() {
                     setIsOpen(false);
                   }}
                   className={`
-                    w-full flex items-center justify-between px-3 py-2 rounded text-left
+                    w-full flex items-center justify-between px-3 py-2 rounded text-left group
                     ${menu.id === activeMenuId ? 'bg-primary-50 text-primary-700' : 'hover:bg-gray-50'}
                   `}
                 >
@@ -57,6 +57,17 @@ export function MenuSelector() {
                       {menu.items?.length || 0} recipes
                     </span>
                     {menu.id === activeMenuId && <Check size={16} className="text-primary-600" />}
+                    {menus.length > 1 && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (confirm(`Delete "${menu.name}"?`)) deleteMenu(menu.id);
+                        }}
+                        className="p-1 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    )}
                   </div>
                 </button>
               ))}

@@ -3,7 +3,6 @@ import { useAuthStore, useRecipeStore, useMenuStore, useUIStore } from '@/stores
 
 import { Sidebar } from '@/components/sidebar/Sidebar';
 import { InviteCodeModal } from '@/components/auth/InviteCodeModal';
-import { UsageBadge } from '@/components/auth/UsageBadge';
 import { MenuArea } from '@/components/menu/MenuArea';
 import { OptimizationPanel } from '@/components/optimization/OptimizationPanel';
 import { ThemePanel } from '@/components/theming/ThemePanel';
@@ -13,12 +12,20 @@ import { OnboardingModal } from '@/components/onboarding/OnboardingModal';
 import { Modal } from '@/components/ui/Modal';
 import { ToastContainer } from '@/components/ui/Toast';
 import { getStarterPack, loadStarterPack } from '@/lib/starterPack';
+import type { Recipe, MenuItem } from '@/types';
+
+interface RecipeEditModalData extends Partial<Recipe> {
+  id?: string;
+  sourceRecipeId?: string | null;
+  isMenuItem?: boolean;
+  onSaveCallback?: (data: Partial<MenuItem>) => Promise<void>;
+}
 
 function App() {
   const { isAuthenticated, isLoading: authLoading, initialize: initAuth, isFirstLogin, clearFirstLogin, starterPackId } = useAuthStore();
-  const { loadRecipes, addRecipe } = useRecipeStore();
+  const { loadRecipes, addRecipe, updateRecipe } = useRecipeStore();
   const { loadMenus, loadRecipeBoxes } = useMenuStore();
-  const { activeModal, closeModal, addToast, hasCompletedOnboarding, completeOnboarding } = useUIStore();
+  const { activeModal, modalData, closeModal, addToast, hasCompletedOnboarding, completeOnboarding } = useUIStore();
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   // Initialize auth and load data
@@ -99,12 +106,6 @@ function App() {
 
       {/* Main content */}
       <div className="flex-1 flex flex-col min-h-screen">
-        {/* Header */}
-        <header className="bg-white border-b border-gray-200 px-4 py-2 flex items-center justify-end">
-          <UsageBadge />
-        </header>
-
-        {/* Menu Area */}
         <MenuArea />
       </div>
 
@@ -112,13 +113,25 @@ function App() {
       <Modal
         isOpen={activeModal === 'recipe-edit'}
         onClose={closeModal}
-        title="Add Recipe"
+        title={modalData ? 'Edit Recipe' : 'Add Recipe'}
         size="lg"
       >
         <RecipeEditForm
+          recipe={modalData as Recipe | undefined}
+          sourceRecipeId={(modalData as RecipeEditModalData | undefined)?.sourceRecipeId}
           onSave={async (data) => {
-            await addRecipe(data as any);
-            addToast('success', 'Recipe added');
+            if (modalData) {
+              const editData = modalData as RecipeEditModalData;
+              if (editData.isMenuItem && editData.onSaveCallback) {
+                await editData.onSaveCallback(data as Partial<MenuItem>);
+              } else if (editData.id) {
+                await updateRecipe(editData.id, data);
+                addToast('success', 'Recipe updated');
+              }
+            } else {
+              await addRecipe(data as Omit<Recipe, 'id' | 'createdAt' | 'updatedAt'>);
+              addToast('success', 'Recipe added');
+            }
             closeModal();
           }}
           onCancel={closeModal}

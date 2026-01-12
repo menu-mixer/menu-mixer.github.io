@@ -7,12 +7,13 @@ import { Input } from '@/components/ui/Input';
 
 interface RecipeEditFormProps {
   recipe?: Recipe;
+  sourceRecipeId?: string | null;
   onSave: (data: Partial<Recipe>) => void;
   onCancel: () => void;
   isLoading?: boolean;
 }
 
-export function RecipeEditForm({ recipe, onSave, onCancel, isLoading }: RecipeEditFormProps) {
+export function RecipeEditForm({ recipe, sourceRecipeId, onSave, onCancel, isLoading }: RecipeEditFormProps) {
   const [name, setName] = useState(recipe?.name || '');
   const [description, setDescription] = useState(recipe?.description || '');
   const [instructions, setInstructions] = useState(recipe?.instructions || '');
@@ -58,7 +59,13 @@ export function RecipeEditForm({ recipe, onSave, onCancel, isLoading }: RecipeEd
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <>
+      {sourceRecipeId && (
+        <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
+          <strong>Note:</strong> This is a menu item. Changes here will only affect this menu and won't update the original recipe.
+        </div>
+      )}
+      <form onSubmit={handleSubmit} className="space-y-4">
       <Input
         label="Recipe Name"
         value={name}
@@ -177,5 +184,6 @@ export function RecipeEditForm({ recipe, onSave, onCancel, isLoading }: RecipeEd
         </Button>
       </div>
     </form>
+    </>
   );
 }
