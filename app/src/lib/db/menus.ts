@@ -5,12 +5,23 @@ import type { Menu, MenuItem, Recipe } from '@/types';
 export const menuDB = {
   async getAll(): Promise<Menu[]> {
     const db = await getDB();
-    const menus = await db.getAll('menus');
-    // Migrate old menus that don't have items array
-    return menus.map(menu => ({
-      ...menu,
-      items: menu.items || [],
-    }));
+    const rawMenus = await db.getAll('menus');
+
+    // Validate and migrate menus
+    const menus = rawMenus
+      .filter(menu => menu && typeof menu === 'object' && menu.id && menu.name)
+      .map(menu => ({
+        ...menu,
+        items: Array.isArray(menu.items) ? menu.items : [],
+        createdAt: menu.createdAt || new Date().toISOString(),
+        updatedAt: menu.updatedAt || new Date().toISOString(),
+      }));
+
+    if (rawMenus.length !== menus.length) {
+      console.warn(`Filtered ${rawMenus.length - menus.length} invalid menus`);
+    }
+
+    return menus;
   },
 
   async getById(id: string): Promise<Menu | undefined> {

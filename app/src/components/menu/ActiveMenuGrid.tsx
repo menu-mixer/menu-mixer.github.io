@@ -63,10 +63,10 @@ export function ActiveMenuGrid() {
     <div
       onDrop={handleDrop}
       onDragOver={handleDragOver}
-      className="flex-1 overflow-y-auto p-4 bg-gray-50"
+      className={`flex-1 overflow-y-auto p-4 bg-gray-50 ${menuItems.length === 0 ? 'flex' : ''}`}
     >
       {menuItems.length === 0 ? (
-        <div className="flex flex-col items-center justify-center h-full text-gray-500 border-2 border-dashed border-gray-200 rounded-xl">
+        <div className="flex-1 flex flex-col items-center justify-center text-gray-500 border-2 border-dashed border-gray-200 rounded-xl">
           <p className="text-lg font-medium mb-1">Empty Menu</p>
           <p className="text-sm">Drag recipes here from the box below</p>
         </div>

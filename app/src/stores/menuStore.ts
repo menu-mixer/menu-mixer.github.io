@@ -40,9 +40,11 @@ export const useMenuStore = create<MenuStore>((set, get) => ({
     set({ isLoading: true });
     try {
       const menus = await menuDB.getAll();
+      console.log('[menuStore] Loaded menus:', menus.length, menus.map(m => ({ id: m.id, name: m.name, items: m.items?.length })));
 
       // Create default menu if none exist
       if (menus.length === 0) {
+        console.log('[menuStore] No menus found, creating default');
         const defaultMenu = await menuDB.create('My Menu');
         set({ menus: [defaultMenu], activeMenuId: defaultMenu.id, isLoading: false });
       } else {
@@ -51,10 +53,11 @@ export const useMenuStore = create<MenuStore>((set, get) => ({
         const activeId = storedActiveId && menus.some(m => m.id === storedActiveId)
           ? storedActiveId
           : menus[0].id;
+        console.log('[menuStore] Setting active menu:', activeId);
         set({ menus, activeMenuId: activeId, isLoading: false });
       }
     } catch (err) {
-      console.error('Failed to load menus:', err);
+      console.error('[menuStore] Failed to load menus:', err);
       // Create a default menu as fallback
       try {
         const defaultMenu = await menuDB.create('My Menu');
