@@ -7,6 +7,9 @@ import path from 'path'
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   base: '/mixer/',
+  define: {
+    __BUILD_DATE__: JSON.stringify(new Date().toISOString().split('T')[0]),
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

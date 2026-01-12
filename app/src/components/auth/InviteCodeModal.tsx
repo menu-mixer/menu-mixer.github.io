@@ -45,6 +45,10 @@ export function InviteCodeModal({ isOpen }: InviteCodeModalProps) {
         <p className="text-xs text-gray-500 text-center">
           By continuing, you agree to our Terms of Service and Privacy Policy.
         </p>
+
+        <p className="text-xs text-gray-400 text-center pt-2">
+          Build: {__BUILD_DATE__}
+        </p>
       </form>
     </Modal>
   );
