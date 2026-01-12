@@ -38,19 +38,30 @@ export const useMenuStore = create<MenuStore>((set, get) => ({
 
   loadMenus: async () => {
     set({ isLoading: true });
-    const menus = await menuDB.getAll();
+    try {
+      const menus = await menuDB.getAll();
 
-    // Create default menu if none exist
-    if (menus.length === 0) {
-      const defaultMenu = await menuDB.create('My Menu');
-      set({ menus: [defaultMenu], activeMenuId: defaultMenu.id, isLoading: false });
-    } else {
-      // Restore active menu from localStorage or use first menu
-      const storedActiveId = localStorage.getItem('menu-mixer-active-menu');
-      const activeId = storedActiveId && menus.some(m => m.id === storedActiveId)
-        ? storedActiveId
-        : menus[0].id;
-      set({ menus, activeMenuId: activeId, isLoading: false });
+      // Create default menu if none exist
+      if (menus.length === 0) {
+        const defaultMenu = await menuDB.create('My Menu');
+        set({ menus: [defaultMenu], activeMenuId: defaultMenu.id, isLoading: false });
+      } else {
+        // Restore active menu from localStorage or use first menu
+        const storedActiveId = localStorage.getItem('menu-mixer-active-menu');
+        const activeId = storedActiveId && menus.some(m => m.id === storedActiveId)
+          ? storedActiveId
+          : menus[0].id;
+        set({ menus, activeMenuId: activeId, isLoading: false });
+      }
+    } catch (err) {
+      console.error('Failed to load menus:', err);
+      // Create a default menu as fallback
+      try {
+        const defaultMenu = await menuDB.create('My Menu');
+        set({ menus: [defaultMenu], activeMenuId: defaultMenu.id, isLoading: false });
+      } catch {
+        set({ isLoading: false });
+      }
     }
   },
 
